@@ -65,6 +65,7 @@ typedef struct
   int     socket_fd;
   int     baudrate;
   char    port_name[100];
+  uart_port_t port;
 
   double  packet_start_time;
   double  packet_timeout;
@@ -125,6 +126,7 @@ int portHandlerESP32(const char *port_name, const int tx_pin, const int rx_pin, 
   portData[port_num].tx_pin = tx_pin;
   portData[port_num].rx_pin = rx_pin;
   portData[port_num].out_en_pin = out_en_pin;
+  portData[port_num].port = UART_NUM_1;
 
   // GPIOの設定
   gpio_reset_pin(out_en_pin);
@@ -139,22 +141,31 @@ int portHandlerESP32(const char *port_name, const int tx_pin, const int rx_pin, 
 
 uint8_t openPortESP32(int port_num)
 {
-  static bool uart_installed[UART_NUM_MAX] = {false};
+  uart_config_t uart_config = {
+        .baud_rate = portData[port_num].baudrate,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
 
   const int rx_buffer_size = 2048;
   const int tx_buffer_size = 2048;
 
-  if (!uart_installed[port_num]) {
-      uart_driver_install(port_num, rx_buffer_size, tx_buffer_size, 0, NULL, 0);
-      uart_installed[port_num] = true;
-  }
+  ESP_ERROR_CHECK(uart_driver_install(portData[port_num].port, rx_buffer_size, tx_buffer_size, 0, NULL, 0));
+  ESP_ERROR_CHECK(uart_param_config(portData[port_num].port, &uart_config));
+  ESP_ERROR_CHECK(uart_set_pin(portData[port_num].port, portData[port_num].tx_pin, portData[port_num].rx_pin, -1, -1));
 
-  return setBaudRateESP32(port_num, portData[port_num].baudrate);
+  return True;
 }
 
 void closePortESP32(int port_num)
 {
-  uart_driver_delete(port_num);
+  if (uart_is_driver_installed(portData[port_num].port))
+  {
+    uart_driver_delete(portData[port_num].port);
+  }
 }
 
 void clearPortESP32(int port_num)
@@ -174,21 +185,9 @@ char *getPortNameESP32(int port_num)
 
 uint8_t setBaudRateESP32(int port_num, const int baudrate)
 {
-
-  closePortESP32(port_num);
-
-  uart_config_t uart_config = {
-        .baud_rate = baudrate,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
-    };
-  ESP_ERROR_CHECK(uart_param_config(port_num, &uart_config));
-  ESP_ERROR_CHECK(uart_set_pin(port_num, portData[port_num].tx_pin, portData[port_num].rx_pin, -1, -1));
-
   portData[port_num].baudrate = baudrate;
+  portData[port_num].tx_time_per_byte = (1000.0 / (double)portData[port_num].baudrate) * 10.0;
+  ESP_ERROR_CHECK(uart_set_baudrate(portData[port_num].port, portData[port_num].baudrate));
 
   return True;
 }
@@ -208,7 +207,7 @@ int getBaudRateESP32(int port_num)
 int readPortESP32(int port_num, uint8_t *packet, int length)
 {
   // 最大 length バイト読み取り（20msまで待つ）
-  int len = uart_read_bytes(port_num, packet, length, 20 / portTICK_PERIOD_MS);
+  int len = uart_read_bytes(portData[port_num].port, packet, length, 20 / portTICK_PERIOD_MS);
   return len;
 }
 
@@ -229,7 +228,7 @@ int writePortESP32(int port_num, uint8_t *packet, int length)
   // 書き込み前に方向をTXへ
   set_direction_tx();  // 必要に応じて呼ぶ（半二重通信の場合）
 
-  int len = uart_write_bytes(port_num, (const char *)packet, length);
+  int len = uart_write_bytes(portData[port_num].port, (const char *)packet, length);
 
   uart_wait_tx_done(port_num, 20 / portTICK_PERIOD_MS);  // 書き込み完了を待つ
 
