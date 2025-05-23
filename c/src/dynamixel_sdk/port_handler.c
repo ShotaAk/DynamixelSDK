@@ -119,8 +119,8 @@ int     getBaudRate         (int port_num) { return getBaudRateESP32(port_num); 
 int     readPort            (int port_num, uint8_t *packet, int length) { return readPortESP32(port_num, packet, length); }
 int     writePort           (int port_num, uint8_t *packet, int length) { return writePortESP32(port_num, packet, length); }
 
-// void    setPacketTimeout    (int port_num, uint16_t packet_length) { setPacketTimeoutLinux(port_num, packet_length); }
-// void    setPacketTimeoutMSec(int port_num, double msec) { setPacketTimeoutMSecLinux(port_num, msec); }
-// uint8_t isPacketTimeout     (int port_num) { return isPacketTimeoutLinux(port_num); }
+void    setPacketTimeout    (int port_num, uint16_t packet_length) { setPacketTimeoutESP32(port_num, packet_length); }
+void    setPacketTimeoutMSec(int port_num, double msec) { setPacketTimeoutMSecESP32(port_num, msec); }
+uint8_t isPacketTimeout     (int port_num) { return isPacketTimeoutESP32(port_num); }
 
 #endif

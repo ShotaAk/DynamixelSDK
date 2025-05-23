@@ -41,7 +41,7 @@ char   *getPortNameESP32        (int port_num);
 uint8_t setBaudRateESP32        (int port_num, const int baudrate);
 int     getBaudRateESP32        (int port_num);
 
-int     getBytesAvailableESP32  (int port_num);
+// int     getBytesAvailableESP32  (int port_num);
 
 int     readPortESP32           (int port_num, uint8_t *packet, int length);
 int     writePortESP32          (int port_num, uint8_t *packet, int length);
