@@ -51,7 +51,10 @@ extern int     g_used_port_num;
 extern uint8_t *g_is_using;
 
 WINDECLSPEC int     portHandler             (const char *port_name);
+
+#if defined(__ESP32__)
 WINDECLSPEC int     portHandlerUART         (const char *port_name, const int tx_pin, const int rx_pin, const int out_en_pin);
+#endif
 
 WINDECLSPEC uint8_t openPort                (int port_num);
 WINDECLSPEC void    closePort               (int port_num);
@@ -63,7 +66,7 @@ WINDECLSPEC char   *getPortName             (int port_num);
 WINDECLSPEC uint8_t setBaudRate             (int port_num, const int baudrate);
 WINDECLSPEC int     getBaudRate             (int port_num);
 
-#if defined(__linux__) || defined(__APPLE__) || defined(__ESP32__)
+#if defined(__linux__) || defined(__APPLE__)
 WINDECLSPEC int     getBytesAvailable       (int port_num);
 #endif
 
