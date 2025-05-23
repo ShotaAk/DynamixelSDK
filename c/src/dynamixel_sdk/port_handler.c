@@ -104,9 +104,9 @@ int     portHandler         (const char *port_name) { return portHandlerESP32(po
 int     portHandlerUART     (const char *port_name, const int tx_pin, const int rx_pin, const int out_en_pin) {
      return portHandlerESP32(port_name, tx_pin, rx_pin, out_en_pin); }
 
-// uint8_t openPort            (int port_num) { return openPortLinux(port_num); }
-// void    closePort           (int port_num) { closePortLinux(port_num); }
-// void    clearPort           (int port_num) { clearPortLinux(port_num); }
+uint8_t openPort            (int port_num) { return openPortESP32(port_num); }
+void    closePort           (int port_num) { closePortESP32(port_num); }
+void    clearPort           (int port_num) { clearPortESP32(port_num); }
 
 void    setPortName         (int port_num, const char *port_name) { setPortNameESP32(port_num, port_name); }
 char   *getPortName         (int port_num) { return getPortNameESP32(port_num); }
@@ -116,8 +116,8 @@ int     getBaudRate         (int port_num) { return getBaudRateESP32(port_num); 
 
 // int     getBytesAvailable   (int port_num) { return getBytesAvailableLinux(port_num); }
 
-// int     readPort            (int port_num, uint8_t *packet, int length) { return readPortLinux(port_num, packet, length); }
-// int     writePort           (int port_num, uint8_t *packet, int length) { return writePortLinux(port_num, packet, length); }
+int     readPort            (int port_num, uint8_t *packet, int length) { return readPortESP32(port_num, packet, length); }
+int     writePort           (int port_num, uint8_t *packet, int length) { return writePortESP32(port_num, packet, length); }
 
 // void    setPacketTimeout    (int port_num, uint16_t packet_length) { setPacketTimeoutLinux(port_num, packet_length); }
 // void    setPacketTimeoutMSec(int port_num, double msec) { setPacketTimeoutMSecLinux(port_num, msec); }

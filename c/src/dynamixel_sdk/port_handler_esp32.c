@@ -29,6 +29,7 @@
 // #include <sys/ioctl.h>
 // #include <linux/serial.h>
 
+#include "driver/gpio.h"
 #include "driver/uart.h"
 #include "esp_timer.h"
 #include "esp_log.h"
@@ -148,6 +149,10 @@ int portHandlerESP32(const char *port_name, const int tx_pin, const int rx_pin, 
   portData[port_num].rx_pin = rx_pin;
   portData[port_num].out_en_pin = out_en_pin;
 
+  // GPIOの設定
+  gpio_reset_pin(out_en_pin);
+  gpio_set_direction(out_en_pin, GPIO_MODE_OUTPUT);
+
   g_is_using[port_num] = False;
 
   setPortNameESP32(port_num, port_name);
@@ -170,19 +175,15 @@ uint8_t openPortESP32(int port_num)
   return setBaudRateESP32(port_num, portData[port_num].baudrate);
 }
 
-// void closePortESP32(int port_num)
-// {
-//   if (portData[port_num].socket_fd != -1)
-//   {
-//     close(portData[port_num].socket_fd);
-//     portData[port_num].socket_fd = -1;
-//   }
-// }
+void closePortESP32(int port_num)
+{
+  uart_driver_delete(port_num);
+}
 
-// void clearPortESP32(int port_num)
-// {
-//   tcflush(portData[port_num].socket_fd, TCIFLUSH);
-// }
+void clearPortESP32(int port_num)
+{
+  uart_flush(port_num);
+}
 
 void setPortNameESP32(int port_num, const char *port_name)
 {
@@ -225,15 +226,38 @@ int getBaudRateESP32(int port_num)
 //   return bytes_available;
 // }
 
-// int readPortESP32(int port_num, uint8_t *packet, int length)
-// {
-//   return read(portData[port_num].socket_fd, packet, length);
-// }
+int readPortESP32(int port_num, uint8_t *packet, int length)
+{
+  // 最大 length バイト読み取り（20msまで待つ）
+  int len = uart_read_bytes(port_num, packet, length, 20 / portTICK_PERIOD_MS);
+  return len;
+}
 
-// int writePortESP32(int port_num, uint8_t *packet, int length)
-// {
-//   return write(portData[port_num].socket_fd, packet, length);
-// }
+static void set_direction_tx()
+{
+  // Tri State bufferのOEを操作する
+  gpio_set_level(portData[0].out_en_pin, 1);  // TX
+}
+
+static void set_direction_rx()
+{
+  // Tri State bufferのOEを操作する
+  gpio_set_level(portData[0].out_en_pin, 0);  // RX
+}
+
+int writePortESP32(int port_num, uint8_t *packet, int length)
+{
+  // 書き込み前に方向をTXへ
+  set_direction_tx();  // 必要に応じて呼ぶ（半二重通信の場合）
+
+  int len = uart_write_bytes(port_num, (const char *)packet, length);
+
+  uart_wait_tx_done(port_num, 20 / portTICK_PERIOD_MS);  // 書き込み完了を待つ
+
+  set_direction_rx();  // TX完了後すぐRXへ戻す
+
+  return len;
+}
 
 // void setPacketTimeoutESP32(int port_num, uint16_t packet_length)
 // {
