@@ -95,11 +95,10 @@ uint8_t isPacketTimeout     (int port_num) { return isPacketTimeoutWindows(port_
 
 #elif defined(__ESP32__)
 #include "port_handler.h"
+#include "port_handler_esp32.h"
 
-// TBD
-
-// int     g_used_port_num = 0;
-// uint8_t *g_is_using = NULL;
+int     g_used_port_num = 0;
+uint8_t *g_is_using = NULL;
 
 // int     portHandler         (const char *port_name) { return portHandlerLinux(port_name); }
 
@@ -108,7 +107,7 @@ uint8_t isPacketTimeout     (int port_num) { return isPacketTimeoutWindows(port_
 // void    clearPort           (int port_num) { clearPortLinux(port_num); }
 
 // void    setPortName         (int port_num, const char *port_name) { setPortNameLinux(port_num, port_name); }
-// char   *getPortName         (int port_num) { return getPortNameLinux(port_num); }
+char   *getPortName         (int port_num) { return getPortNameESP32(port_num); }
 
 // uint8_t setBaudRate         (int port_num, const int baudrate) { return setBaudRateLinux(port_num, baudrate); }
 // int     getBaudRate         (int port_num) { return getBaudRateLinux(port_num); }
