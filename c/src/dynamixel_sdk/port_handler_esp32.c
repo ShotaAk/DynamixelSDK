@@ -188,6 +188,8 @@ uint8_t setBaudRateESP32(int port_num, const int baudrate)
   ESP_ERROR_CHECK(uart_param_config(port_num, &uart_config));
   ESP_ERROR_CHECK(uart_set_pin(port_num, portData[port_num].tx_pin, portData[port_num].rx_pin, -1, -1));
 
+  portData[port_num].baudrate = baudrate;
+
   return True;
 }
 
