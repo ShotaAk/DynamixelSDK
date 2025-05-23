@@ -16,7 +16,7 @@
 
 /* Author: Ryu Woon Jung (Leon) */
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__ESP32__)
 #include <unistd.h>
 #include "protocol2_packet_handler.h"
 #elif defined(__APPLE__)
@@ -478,7 +478,7 @@ void rxPacket2(int port_num)
         break;
       }
     }
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__ESP32__)
     usleep(0);
 #elif defined(_WIN32) || defined(_WIN64)
     Sleep(0);

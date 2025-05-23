@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__ESP32__)
 #include "packet_handler.h"
 #include "protocol1_packet_handler.h"
 #include "protocol2_packet_handler.h"

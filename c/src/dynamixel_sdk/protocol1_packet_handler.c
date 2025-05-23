@@ -16,7 +16,7 @@
 
 /* Author: Ryu Woon Jung (Leon) */
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__ESP32__)
 #include "protocol1_packet_handler.h"
 #elif defined(__APPLE__)
 #include "protocol1_packet_handler.h"

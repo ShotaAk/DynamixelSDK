@@ -19,7 +19,7 @@
 #ifndef DYNAMIXEL_SDK_INCLUDE_DYNAMIXEL_SDK_PORTHANDLER_C_H_
 #define DYNAMIXEL_SDK_INCLUDE_DYNAMIXEL_SDK_PORTHANDLER_C_H_
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__ESP32__)
 #define WINDECLSPEC
 #elif defined(__APPLE__)
 #define WINDECLSPEC
@@ -62,7 +62,7 @@ WINDECLSPEC char   *getPortName             (int port_num);
 WINDECLSPEC uint8_t setBaudRate             (int port_num, const int baudrate);
 WINDECLSPEC int     getBaudRate             (int port_num);
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__ESP32__)
 WINDECLSPEC int     getBytesAvailable       (int port_num);
 #endif
 

@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__ESP32__)
 #include "group_bulk_read.h"
 #elif defined(__APPLE__)
 #include "group_bulk_read.h"
