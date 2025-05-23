@@ -16,11 +16,11 @@
 
 /* Author: Ryu Woon Jung (Leon) */
 
-#if defined(__linux__)
+#if defined(__ESP32__)
 
 // #include <stdio.h>
 // #include <fcntl.h>
-// #include <string.h>
+#include <string.h>
 // #include <stdlib.h>
 // #include <unistd.h>
 // #include <termios.h>
@@ -33,6 +33,8 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "port_handler_esp32.h"
+
+static const char *TAG = "dynamixel";
 
 #define LATENCY_TIMER  16  // msec (USB latency timer)
                            // You should adjust the latency timer value. From the version Ubuntu 16.04.2, the default latency timer of the usb serial is '16 msec'.
@@ -89,67 +91,84 @@ typedef struct
   double  packet_start_time;
   double  packet_timeout;
   double  tx_time_per_byte;
+
+  int tx_pin;
+  int rx_pin;
+  int out_en_pin;
 }PortData;
 
 static PortData *portData;
 
-// int portHandlerESP32(const char *port_name)
-// {
-//   int port_num;
+int portHandlerESP32(const char *port_name, const int tx_pin, const int rx_pin, const int out_en_pin)
+{
+  int port_num;
 
-//   if (portData == NULL)
-//   {
-//     port_num = 0;
-//     g_used_port_num = 1;
-//     portData = (PortData *)calloc(1, sizeof(PortData));
-//     g_is_using = (uint8_t*)calloc(1, sizeof(uint8_t));
-//   }
-//   else
-//   {
-//     for (port_num = 0; port_num < g_used_port_num; port_num++)
-//     {
-//       if (!strcmp(portData[port_num].port_name, port_name))
-//         break;
-//     }
+  if (portData == NULL)
+  {
+    port_num = 0;
+    g_used_port_num = 1;
+    portData = (PortData *)calloc(1, sizeof(PortData));
+    g_is_using = (uint8_t*)calloc(1, sizeof(uint8_t));
+  }
+  else
+  {
+    for (port_num = 0; port_num < g_used_port_num; port_num++)
+    {
+      if (!strcmp(portData[port_num].port_name, port_name))
+        break;
+    }
 
-//     if (port_num == g_used_port_num)
-//     {
-//       for (port_num = 0; port_num < g_used_port_num; port_num++)
-//       {
-//         if (portData[port_num].socket_fd != -1)
-//           break;
-//       }
+    if (port_num == g_used_port_num)
+    {
+      for (port_num = 0; port_num < g_used_port_num; port_num++)
+      {
+        if (portData[port_num].socket_fd != -1)
+          break;
+      }
 
-//       if (port_num == g_used_port_num)
-//       {
-//         g_used_port_num++;
-//         portData = (PortData*)realloc(portData, g_used_port_num * sizeof(PortData));
-//         g_is_using = (uint8_t*)realloc(g_is_using, g_used_port_num * sizeof(uint8_t));
-//       }
-//     }
-//     else
-//     {
-//       printf("[PortHandler setup] The port number %d has same device name... reinitialize port number %d!!\n", port_num, port_num);
-//     }
-//   }
+      if (port_num == g_used_port_num)
+      {
+        g_used_port_num++;
+        portData = (PortData*)realloc(portData, g_used_port_num * sizeof(PortData));
+        g_is_using = (uint8_t*)realloc(g_is_using, g_used_port_num * sizeof(uint8_t));
+      }
+    }
+    else
+    {
+      ESP_LOGI(TAG, "[PortHandler setup] The port number %d has same device name... reinitialize port number %d!!\n", port_num, port_num);
+    }
+  }
 
-//   portData[port_num].socket_fd = -1;
-//   portData[port_num].baudrate = DEFAULT_BAUDRATE;
-//   portData[port_num].packet_start_time = 0.0;
-//   portData[port_num].packet_timeout = 0.0;
-//   portData[port_num].tx_time_per_byte = 0.0;
+  portData[port_num].socket_fd = -1;
+  portData[port_num].baudrate = DEFAULT_BAUDRATE;
+  portData[port_num].packet_start_time = 0.0;
+  portData[port_num].packet_timeout = 0.0;
+  portData[port_num].tx_time_per_byte = 0.0;
+  portData[port_num].tx_pin = tx_pin;
+  portData[port_num].rx_pin = rx_pin;
+  portData[port_num].out_en_pin = out_en_pin;
 
-//   g_is_using[port_num] = False;
+  g_is_using[port_num] = False;
 
-//   setPortNameESP32(port_num, port_name);
+  setPortNameESP32(port_num, port_name);
 
-//   return port_num;
-// }
+  return port_num;
+}
 
-// uint8_t openPortESP32(int port_num)
-// {
-//   return setBaudRateESP32(port_num, portData[port_num].baudrate);
-// }
+uint8_t openPortESP32(int port_num)
+{
+  static bool uart_installed[UART_NUM_MAX] = {false};
+
+  const int rx_buffer_size = 2048;
+  const int tx_buffer_size = 2048;
+
+  if (!uart_installed[port_num]) {
+      uart_driver_install(port_num, rx_buffer_size, tx_buffer_size, 0, NULL, 0);
+      uart_installed[port_num] = true;
+  }
+
+  return setBaudRateESP32(port_num, portData[port_num].baudrate);
+}
 
 // void closePortESP32(int port_num)
 // {
@@ -165,39 +184,39 @@ static PortData *portData;
 //   tcflush(portData[port_num].socket_fd, TCIFLUSH);
 // }
 
-// void setPortNameESP32(int port_num, const char *port_name)
-// {
-//   strcpy(portData[port_num].port_name, port_name);
-// }
+void setPortNameESP32(int port_num, const char *port_name)
+{
+  strcpy(portData[port_num].port_name, port_name);
+}
 
 char *getPortNameESP32(int port_num)
 {
   return portData[port_num].port_name;
 }
 
-// uint8_t setBaudRateESP32(int port_num, const int baudrate)
-// {
-//   int baud = getCFlagBaud(baudrate);
+uint8_t setBaudRateESP32(int port_num, const int baudrate)
+{
 
-//   closePortESP32(port_num);
+  closePortESP32(port_num);
 
-//   if (baud <= 0)   // custom baudrate
-//   {
-//     setupPortESP32(port_num, B38400);
-//     portData[port_num].baudrate = baudrate;
-//     return setCustomBaudrateESP32(port_num, baudrate);
-//   }
-//   else
-//   {
-//     portData[port_num].baudrate = baudrate;
-//     return setupPortESP32(port_num, baud);
-//   }
-// }
+  uart_config_t uart_config = {
+        .baud_rate = baudrate,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+  ESP_ERROR_CHECK(uart_param_config(port_num, &uart_config));
+  ESP_ERROR_CHECK(uart_set_pin(port_num, portData[port_num].tx_pin, portData[port_num].rx_pin, -1, -1));
 
-// int getBaudRateESP32(int port_num)
-// {
-//   return portData[port_num].baudrate;
-// }
+  return True;
+}
+
+int getBaudRateESP32(int port_num)
+{
+  return portData[port_num].baudrate;
+}
 
 // int getBytesAvailableESP32(int port_num)
 // {

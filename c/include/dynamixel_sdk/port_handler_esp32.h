@@ -22,7 +22,7 @@
 
 #include "port_handler.h"
 
-int portHandlerESP32            (const char *port_name);
+int portHandlerESP32            (const char *port_name, const int tx_pin, const int rx_pin, const int out_en_pin);
 
 uint8_t setupPortESP32          (int port_num, const int cflag_baud);
 uint8_t setCustomBaudrateESP32  (int port_num, int speed);

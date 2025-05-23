@@ -51,6 +51,7 @@ extern int     g_used_port_num;
 extern uint8_t *g_is_using;
 
 WINDECLSPEC int     portHandler             (const char *port_name);
+WINDECLSPEC int     portHandlerUART         (const char *port_name, const int tx_pin, const int rx_pin, const int out_en_pin);
 
 WINDECLSPEC uint8_t openPort                (int port_num);
 WINDECLSPEC void    closePort               (int port_num);

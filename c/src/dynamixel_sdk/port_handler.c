@@ -100,17 +100,19 @@ uint8_t isPacketTimeout     (int port_num) { return isPacketTimeoutWindows(port_
 int     g_used_port_num = 0;
 uint8_t *g_is_using = NULL;
 
-// int     portHandler         (const char *port_name) { return portHandlerLinux(port_name); }
+int     portHandler         (const char *port_name) { return portHandlerESP32(port_name, -1, -1, -1); }
+int     portHandlerUART     (const char *port_name, const int tx_pin, const int rx_pin, const int out_en_pin) {
+     return portHandlerESP32(port_name, tx_pin, rx_pin, out_en_pin); }
 
 // uint8_t openPort            (int port_num) { return openPortLinux(port_num); }
 // void    closePort           (int port_num) { closePortLinux(port_num); }
 // void    clearPort           (int port_num) { clearPortLinux(port_num); }
 
-// void    setPortName         (int port_num, const char *port_name) { setPortNameLinux(port_num, port_name); }
+void    setPortName         (int port_num, const char *port_name) { setPortNameESP32(port_num, port_name); }
 char   *getPortName         (int port_num) { return getPortNameESP32(port_num); }
 
-// uint8_t setBaudRate         (int port_num, const int baudrate) { return setBaudRateLinux(port_num, baudrate); }
-// int     getBaudRate         (int port_num) { return getBaudRateLinux(port_num); }
+uint8_t setBaudRate         (int port_num, const int baudrate) { return setBaudRateESP32(port_num, baudrate); }
+int     getBaudRate         (int port_num) { return getBaudRateESP32(port_num); }
 
 // int     getBytesAvailable   (int port_num) { return getBytesAvailableLinux(port_num); }
 
