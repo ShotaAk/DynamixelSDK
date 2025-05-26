@@ -122,7 +122,7 @@ int portHandlerESP32(const char *port_name, const int tx_pin, const int rx_pin, 
   portData[port_num].baudrate = DEFAULT_BAUDRATE;
   portData[port_num].packet_start_time = 0.0;
   portData[port_num].packet_timeout = 0.0;
-  portData[port_num].tx_time_per_byte = 0.0;
+  portData[port_num].tx_time_per_byte = (1000.0 / (double)portData[port_num].baudrate) * 10.0;
   portData[port_num].tx_pin = tx_pin;
   portData[port_num].rx_pin = rx_pin;
   portData[port_num].out_en_pin = out_en_pin;
@@ -170,7 +170,7 @@ void closePortESP32(int port_num)
 
 void clearPortESP32(int port_num)
 {
-  uart_flush(port_num);
+  uart_flush(portData[port_num].port);
 }
 
 void setPortNameESP32(int port_num, const char *port_name)
@@ -230,7 +230,7 @@ int writePortESP32(int port_num, uint8_t *packet, int length)
 
   int len = uart_write_bytes(portData[port_num].port, (const char *)packet, length);
 
-  uart_wait_tx_done(port_num, 20 / portTICK_PERIOD_MS);  // 書き込み完了を待つ
+  uart_wait_tx_done(portData[port_num].port, 20 / portTICK_PERIOD_MS);  // 書き込み完了を待つ
 
   set_direction_rx();  // TX完了後すぐRXへ戻す
 
